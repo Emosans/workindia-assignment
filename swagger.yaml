@@ -108,8 +108,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        400:
-          description: "Bad request."
+        500:
+          description: "User creation error."
 
   /user/login:
     post:
@@ -127,7 +127,7 @@ paths:
                 password:
                   type: string
       responses:
-        200:
+        201:
           description: "Login successful."
           content:
             application/json:
@@ -140,7 +140,7 @@ paths:
                   message:
                     type: string
                     example: "Login successful."
-        401:
+        404:
           description: "Invalid email or password."
 
   /user/bookseat:
@@ -169,10 +169,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Booking"
-        400:
-          description: "Seat already booked."
-        403:
-          description: "Unauthorized."
+        500:
+          description: "Booking of seat failed."
 
   /user/booking/{bookingId}:
     get:
@@ -194,10 +192,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Booking"
-        404:
-          description: "Booking not found."
-        403:
-          description: "Unauthorized."
+        500:
+          description: "Could not get seat."
 
   /user/seat/{trainId}/{seatNumber}:
     get:
