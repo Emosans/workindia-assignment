@@ -1,0 +1,263 @@
+openapi: 3.0.0
+info:
+  title: Train Booking API
+  description: API for booking train tickets
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          example: "user@example.com"
+        password:
+          type: string
+          example: "password123"
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+    Train:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        source:
+          type: string
+          example: "New York"
+        destination:
+          type: string
+          example: "Los Angeles"
+        seats:
+          type: integer
+          example: 100
+        bookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        trainId:
+          type: integer
+          example: 1
+        seatNumber:
+          type: integer
+          example: 45
+        user:
+          $ref: "#/components/schemas/User"
+        train:
+          $ref: "#/components/schemas/Train"
+
+paths:
+  /:
+    get:
+      summary: "Hello World"
+      description: "Returns a simple Hello World message."
+      responses:
+        200:
+          description: "Success"
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Hello World"
+
+  /user/register:
+    post:
+      summary: "Register User"
+      description: "Registers a user with email and password."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        201:
+          description: "User registered successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: "Bad request."
+
+  /user/login:
+    post:
+      summary: "User Login"
+      description: "Logs in a user and returns a token."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: "Login successful."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  message:
+                    type: string
+                    example: "Login successful."
+        401:
+          description: "Invalid email or password."
+
+  /user/bookseat:
+    post:
+      summary: "Book a Seat"
+      description: "Books a seat for a user. Requires Bearer token authentication."
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                trainId:
+                  type: integer
+                seatNumber:
+                  type: integer
+      responses:
+        201:
+          description: "Seat booked successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        400:
+          description: "Seat already booked."
+        403:
+          description: "Unauthorized."
+
+  /user/booking/{bookingId}:
+    get:
+      summary: "Get Booking Details"
+      description: "Returns booking information for a given booking ID. Requires Bearer token authentication."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the booking."
+      responses:
+        200:
+          description: "Booking details retrieved successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        404:
+          description: "Booking not found."
+        403:
+          description: "Unauthorized."
+
+  /user/seat/{trainId}/{seatNumber}:
+    get:
+      summary: "Check Seat Availability"
+      description: "Checks if a specific seat is booked. No authentication is required."
+      parameters:
+        - in: path
+          name: trainId
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the train."
+        - in: path
+          name: seatNumber
+          required: true
+          schema:
+            type: integer
+          description: "The seat number."
+      responses:
+        200:
+          description: "Seat availability retrieved."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  seatNumber:
+                    type: integer
+                    example: 45
+                  isBooked:
+                    type: boolean
+                    example: false
+        404:
+          description: "Seat not found."
+
+  /admin/addtrain:
+    post:
+      summary: "Add Train"
+      description: "Adds a new train. Requires API key authentication."
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source:
+                  type: string
+                destination:
+                  type: string
+                seats:
+                  type: integer
+      responses:
+        201:
+          description: "Train added successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Train"
+        403:
+          description: "Invalid API key."
