@@ -5,27 +5,32 @@ export const bookSeat = async (req: Request, res: Response) => {
   const { userId, trainId, seatNumber } = req.body;
 
   try {
-    const bookingExists = await prisma.booking.findFirst({
-      where: {
-        trainId: trainId,
-        seatNumber: seatNumber,
-      },
-    });
-    if (bookingExists) {
-      res.status(400).json({ error: "seat already booked" });
-      return;
-    }
+    const result = await prisma.$transaction(async (prisma) => {
+      const bookingExists = await prisma.booking.findFirst({
+        where: {
+          trainId: trainId,
+          seatNumber: seatNumber,
+        },
+      });
 
-    const newBooking = await prisma.booking.create({
-      data: {
-        userId: userId,
-        trainId: trainId,
-        seatNumber: seatNumber,
-      },
+      if (bookingExists) {
+        throw new Error("Seat already booked");
+      }
+
+      const newBooking = await prisma.booking.create({
+        data: {
+          userId: userId,
+          trainId: trainId,
+          seatNumber: seatNumber,
+        },
+      });
+
+      return newBooking;
     });
+
     res
       .status(201)
-      .json({ message: "seat booked successfully", booking: { newBooking } });
+      .json({ message: "Seat booked successfully", booking: result });
   } catch (error) {
     res.status(500).json({ error: "cannot book seat" });
   }
