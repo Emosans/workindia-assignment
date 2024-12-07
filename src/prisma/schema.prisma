@@ -17,10 +17,22 @@ model User {
   id Int @id @default(autoincrement())
   email String @unique
   password String
+  bookings Booking[]
 }
 
 model Train{
   id Int @id @default(autoincrement())
   source String
   destination String
+  seats Int
+  bookings Booking[]
+}
+
+model Booking {
+  id Int @id @default(autoincrement())
+  userId Int
+  trainId Int
+  seatNumber Int
+  user User @relation(fields:[userId],references:[id])
+  train Train @relation(fields:[trainId],references:[id])
 }
